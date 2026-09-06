@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Time It Smart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ffffff;
+    --bg-soft:#f1f8fd;
+    --bg-soft-2:#e4f1fa;
+    --primary:#2e86c1;
+    --primary-deep:#1b5e86;
+    --primary-tint:#dcedf9;
+    --ink:#152531;
+    --muted:#647a8c;
+    --line:#d7e7f1;
+    --warn:#c9852b;
+    --danger:#c1553d;
+    --success:#2f9e68;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(21,37,49,0.04), 0 6px 20px rgba(46,134,193,0.08);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif;}
+  button{font-family:inherit;}
+  ::selection{background:var(--primary-tint);}
+
+  .app{display:grid;grid-template-columns:230px 1fr;min-height:100vh;}
+
+  /* Sidebar */
+  .sidebar{
+    background:var(--bg-soft);
+    border-right:1px solid var(--line);
+    padding:22px 16px;
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;padding:0 6px;}
+  .brand-mark{
+    width:34px;height:34px;border-radius:10px;
+    background:linear-gradient(135deg,var(--primary),var(--primary-deep));
+    position:relative;flex:none;
+  }
+  .brand-mark::after{
+    content:"";position:absolute;inset:8px;
+    border:2px solid #fff;border-radius:50%;
+    border-right-color:transparent;border-top-color:transparent;
+  }
+  .brand-name{font-size:16.5px;font-weight:700;letter-spacing:0.2px;line-height:1.15;}
+  .brand-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+
+  nav.tabs{display:flex;flex-direction:column;gap:3px;margin-top:4px;}
+  .tab-btn{
+    display:flex;align-items:center;gap:10px;
+    padding:9px 10px;border-radius:10px;border:none;
+    background:transparent;color:var(--muted);
+    font-size:14px;font-weight:500;text-align:left;cursor:pointer;
+    transition:background .15s ease,color .15s ease;
+  }
+  .tab-btn:hover{background:var(--bg-soft-2);color:var(--ink);}
+  .tab-btn.active{background:var(--primary);color:#fff;}
+  .tab-btn .ico{width:18px;text-align:center;flex:none;font-size:15px;}
+
+  .side-stats{
+    margin-top:auto;
+    background:#fff;border:1px solid var(--line);
+    border-radius:var(--radius);padding:14px;
+    display:flex;flex-direction:column;gap:10px;
+  }
+  .side-stat-row{display:flex;justify-content:space-between;align-items:baseline;}
+  .side-stat-label{font-size:12px;color:var(--muted);}
+  .side-stat-value{font-size:15px;font-weight:700;}
+  .streak-flame{color:var(--warn);}
+
+  /* Main */
+  .main{padding:26px 34px 60px;max-width:980px;width:100%;}
+  .topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:26px;gap:16px;flex-wrap:wrap;}
+  .topbar h1{font-size:22px;margin:0 0 3px;}
+  .topbar .date{color:var(--muted);font-size:13.5px;}
+  .top-pill{
+    display:flex;align-items:center;gap:8px;
+    background:var(--bg-soft);border:1px solid var(--line);
+    padding:8px 14px;border-radius:999px;font-size:13px;color:var(--primary-deep);font-weight:600;
+  }
+
+  .panel{display:none;}
+  .panel.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  .card{
+    background:#fff;border:1px solid var(--line);
+    border-radius:var(--radius);padding:20px;
+    box-shadow:var(--shadow);
+  }
+  .grid-2{display:grid;grid-template-columns:1.1fr 0.9fr;gap:18px;}
+  .section-title{font-size:14px;font-weight:600;margin:0 0 12px;color:var(--ink);}
+  .muted{color:var(--muted);}
+
+  /* Today hero / timer */
+  .hero{
+    display:flex;gap:28px;align-items:center;flex-wrap:wrap;
+    padding:26px;
+  }
+  .ring-wrap{position:relative;width:200px;height:200px;flex:none;}
+  .ring-wrap svg{width:100%;height:100%;transform:rotate(-90deg);}
+  .ring-track{fill:none;stroke:var(--bg-soft-2);stroke-width:10;}
+  .ring-progress{fill:none;stroke:var(--primary);stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset .3s linear, stroke .3s ease;}
+  .ring-progress.break{stroke:var(--success);}
+  .ring-center{
+    position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:2px;
+  }
+  .ring-time{font-family:'Space Grotesk';font-size:34px;font-weight:700;letter-spacing:0.5px;}
+  .ring-mode{font-size:12px;color:var(--muted);}
+
+  .hero-controls{display:flex;flex-direction:column;gap:14px;min-width:220px;flex:1;}
+  .mode-switch{display:flex;background:var(--bg-soft);border-radius:10px;padding:3px;width:fit-content;}
+  .mode-switch button{
+    border:none;background:transparent;padding:7px 14px;border-radius:8px;
+    font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;
+  }
+  .mode-switch button.active{background:#fff;color:var(--primary-deep);box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+  .timer-btns{display:flex;gap:8px;}
+  .btn{
+    border:none;border-radius:9px;padding:10px 16px;font-size:13.5px;font-weight:600;
+    cursor:pointer;transition:opacity .15s ease, transform .1s ease;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn-primary{background:var(--primary);color:#fff;}
+  .btn-primary:hover{background:var(--primary-deep);}
+  .btn-ghost{background:var(--bg-soft);color:var(--ink);}
+  .btn-ghost:hover{background:var(--bg-soft-2);}
+  .btn-danger-ghost{background:#fbeae5;color:var(--danger);}
+  .btn-sm{padding:6px 10px;font-size:12.5px;border-radius:7px;}
+  .durations{display:flex;gap:14px;font-size:12.5px;color:var(--muted);}
+  .durations label{display:flex;flex-direction:column;gap:4px;}
+  .durations input{
+    width:64px;border:1px solid var(--line);border-radius:7px;padding:5px 7px;font-size:13px;color:var(--ink);
+  }
+  .current-task-tag{font-size:12.5px;color:var(--primary-deep);background:var(--primary-tint);
+    padding:5px 10px;border-radius:7px;display:inline-flex;gap:6px;align-items:center;width:fit-content;}
+
+  /* Suggested tasks */
+  .suggest-item{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;
+  }
+  .suggest-left{display:flex;align-items:center;gap:10px;min-width:0;}
+  .prio-dot{width:8px;height:8px;border-radius:50%;flex:none;}
+  .prio-high{background:var(--danger);} .prio-medium{background:var(--warn);} .prio-low{background:var(--success);}
+  .suggest-title{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .suggest-due{font-size:11.5px;color:var(--muted);}
+
+  /* Stat row */
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px;}
+  .stat-box{background:var(--bg-soft);border-radius:12px;padding:14px 16px;}
+  .stat-num{font-family:'Space Grotesk';font-size:26px;font-weight:700;}
+  .stat-label{font-size:12px;color:var(--muted);margin-top:2px;}
+
+  /* Tasks tab */
+  .add-task-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+  .add-task-row input[type=text]{flex:1;min-width:180px;}
+  input[type=text],input[type=datetime-local],select,textarea{
+    border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:13.5px;
+    color:var(--ink);background:#fff;
+  }
+  input:focus,select:focus,textarea:focus,button:focus-visible{
+    outline:2px solid var(--primary);outline-offset:1px;
+  }
+  .filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .chip{
+    border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 13px;
+    font-size:12.5px;color:var(--muted);cursor:pointer;font-weight:500;
+  }
+  .chip.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+
+  .task-row{
+    display:flex;align-items:flex-start;gap:12px;padding:13px 4px;border-bottom:1px solid var(--line);
+  }
+  .task-row:last-child{border-bottom:none;}
+  .task-check{
+    width:19px;height:19px;border-radius:6px;border:1.6px solid var(--line);flex:none;margin-top:2px;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;background:#fff;
+  }
+  .task-check.done{background:var(--primary);border-color:var(--primary);color:#fff;font-size:12px;}
+  .task-body{flex:1;min-width:0;}
+  .task-title{font-size:14px;font-weight:600;}
+  .task-title.done{text-decoration:line-through;color:var(--muted);}
+  .task-meta{display:flex;gap:10px;margin-top:5px;flex-wrap:wrap;align-items:center;}
+  .badge{font-size:11px;padding:3px 8px;border-radius:999px;font-weight:600;}
+  .badge-high{background:#fbeae5;color:var(--danger);}
+  .badge-medium{background:#fdf1de;color:var(--warn);}
+  .badge-low{background:#e4f5eb;color:var(--success);}
+  .badge-overdue{background:#fbeae5;color:var(--danger);}
+  .due-text{font-size:11.5px;color:var(--muted);}
+  .task-actions{display:flex;gap:6px;flex:none;}
+  .icon-btn{
+    border:none;background:transparent;color:var(--muted);cursor:pointer;
+    width:26px;height:26px;border-radius:7px;font-size:13px;
+  }
+  .icon-btn:hover{background:var(--bg-soft-2);color:var(--ink);}
+  select.prio-select{font-size:11.5px;padding:4px 6px;border-radius:7px;}
+  .empty-state{padding:30px 10px;text-align:center;color:var(--muted);font-size:13.5px;}
+
+  /* Calendar */
+  .cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .cal-head .month-label{font-size:16px;font-weight:700;font-family:'Space Grotesk';}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .cal-dow{text-align:center;font-size:11px;color:var(--muted);font-weight:600;padding-bottom:4px;}
+  .cal-cell{
+    min-height:74px;border:1px solid var(--line);border-radius:10px;padding:6px;cursor:pointer;
+    display:flex;flex-direction:column;gap:4px;background:#fff;
+  }
+  .cal-cell.other-month{opacity:0.35;}
+  .cal-cell.today{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary) inset;}
+  .cal-cell.selected{background:var(--bg-soft);}
+  .cal-daynum{font-size:12px;font-weight:600;}
+  .cal-dots{display:flex;gap:3px;flex-wrap:wrap;}
+  .cal-dot{width:6px;height:6px;border-radius:50%;}
+  .cal-day-panel{margin-top:16px;}
+  .cal-day-panel h3{font-size:14px;margin:0 0 10px;}
+
+  /* Focus audio */
+  .sound-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;}
+  .sound-card{
+    border:1px solid var(--line);border-radius:12px;padding:16px;cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .sound-card:hover{border-color:var(--primary);}
+  .sound-card.playing{background:var(--bg-soft);border-color:var(--primary);}
+  .sound-icon{font-size:20px;margin-bottom:8px;}
+  .sound-name{font-size:13.5px;font-weight:600;}
+  .sound-desc{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.4;}
+  .sound-state{font-size:11.5px;color:var(--primary-deep);font-weight:600;margin-top:8px;display:none;}
+  .sound-card.playing .sound-state{display:block;}
+  .volume-row{display:flex;align-items:center;gap:10px;margin-top:20px;}
+  .volume-row input[type=range]{flex:1;accent-color:var(--primary);}
+
+  /* Insights */
+  .bar-chart{display:flex;align-items:flex-end;gap:12px;height:150px;margin-top:16px;}
+  .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;}
+  .bar{width:100%;max-width:34px;background:var(--bg-soft-2);border-radius:6px 6px 3px 3px;position:relative;}
+  .bar.has-value{background:var(--primary);}
+  .bar-day{font-size:11px;color:var(--muted);}
+
+  /* AI chat */
+  .chat-window{
+    height:360px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;
+    padding:14px;display:flex;flex-direction:column;gap:12px;background:var(--bg-soft);margin-bottom:12px;
+  }
+  .msg{max-width:78%;padding:10px 13px;border-radius:12px;font-size:13.5px;line-height:1.5;}
+  .msg.user{align-self:flex-end;background:var(--primary);color:#fff;border-bottom-right-radius:3px;}
+  .msg.ai{align-self:flex-start;background:#fff;border:1px solid var(--line);border-bottom-left-radius:3px;}
+  .msg.ai.loading{color:var(--muted);font-style:italic;}
+  .chat-input-row{display:flex;gap:8px;}
+  .chat-input-row input{flex:1;}
+
+  @media (max-width:820px){
+    .app{grid-template-columns:1fr;}
+    .sidebar{
+      flex-direction:row;align-items:center;overflow-x:auto;
+      padding:12px 14px;position:sticky;top:0;z-index:10;
+    }
+    .brand{flex:none;}
+    nav.tabs{flex-direction:row;margin-top:0;}
+    .side-stats{display:none;}
+    .main{padding:20px 16px 50px;}
+    .grid-2{grid-template-columns:1fr;}
+    .hero{padding:18px 6px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div>
+        <div class="brand-name">Time It Smart</div>
+        <div class="brand-sub">Plan. Focus. Repeat.</div>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="today"><span class="ico">◷</span> Today</button>
+      <button class="tab-btn" data-tab="tasks"><span class="ico">☑</span> Tasks</button>
+      <button class="tab-btn" data-tab="calendar"><span class="ico">▦</span> Calendar</button>
+      <button class="tab-btn" data-tab="focus"><span class="ico">♫</span> Focus audio</button>
+      <button class="tab-btn" data-tab="insights"><span class="ico">◧</span> Insights</button>
+      <button class="tab-btn" data-tab="ai"><span class="ico">✦</span> Ask AI</button>
+    </nav>
+    <div class="side-stats">
+      <div class="side-stat-row"><span class="side-stat-label">Pomodoros today</span><span class="side-stat-value" id="side-pomo">0</span></div>
+      <div class="side-stat-row"><span class="side-stat-label">Tasks done today</span><span class="side-stat-value" id="side-tasks">0</span></div>
+      <div class="side-stat-row"><span class="side-stat-label">Streak</span><span class="side-stat-value"><span class="streak-flame">🔥</span> <span id="side-streak">1</span> day</span></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="page-title">Today</h1>
+        <div class="date" id="today-date"></div>
+      </div>
+      <div class="top-pill"><span class="streak-flame">🔥</span> <span id="pill-streak">1</span> day streak</div>
+    </div>
+
+    <!-- TODAY -->
+    <section class="panel active" id="panel-today">
+      <div class="card hero">
+        <div class="ring-wrap">
+          <svg viewBox="0 0 200 200">
+            <circle class="ring-track" cx="100" cy="100" r="88"></circle>
+            <circle class="ring-progress" id="ring-progress" cx="100" cy="100" r="88"></circle>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-time" id="timer-display">25:00</div>
+            <div class="ring-mode" id="timer-mode-label">Focus session</div>
+          </div>
+        </div>
+        <div class="hero-controls">
+          <div class="mode-switch">
+            <button id="mode-focus-btn" class="active" data-mode="focus">Focus</button>
+            <button id="mode-break-btn" data-mode="break">Break</button>
+          </div>
+          <div id="current-task-tag-wrap"></div>
+          <div class="timer-btns">
+            <button class="btn btn-primary" id="timer-start">Start</button>
+            <button class="btn btn-ghost" id="timer-pause" disabled>Pause</button>
+            <button class="btn btn-ghost" id="timer-reset">Reset</button>
+          </div>
+          <div class="durations">
+            <label>Focus (min)
+              <input type="number" id="dur-focus" min="1" max="120" value="25">
+            </label>
+            <label>Break (min)
+              <input type="number" id="dur-break" min="1" max="60" value="5">
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:18px"></div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-title">Do these first</div>
+          <div class="muted" style="font-size:12.5px;margin-bottom:10px;">Ranked by how close the deadline is and how urgent the task is marked.</div>
+          <div id="suggested-list"></div>
+        </div>
+        <div class="card">
+          <div class="section-title">Today at a glance</div>
+          <div class="stat-grid" style="grid-template-columns:1fr;">
+            <div class="stat-box">
+              <div class="stat-num" id="glance-pomo">0</div>
+              <div class="stat-label">Pomodoros completed today</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-num" id="glance-tasks">0</div>
+              <div class="stat-label">Tasks completed today</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-num"><span class="streak-flame">🔥</span> <span id="glance-streak">1</span></div>
+              <div class="stat-label">Day streak</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TASKS -->
+    <section class="panel" id="panel-tasks">
+      <div class="card">
+        <div class="add-task-row">
+          <input type="text" id="new-task-title" placeholder="Add a task, e.g. Finish slide deck">
+          <select id="new-task-priority">
+            <option value="high">High priority</option>
+            <option value="medium" selected>Medium priority</option>
+            <option value="low">Low priority</option>
+          </select>
+          <input type="datetime-local" id="new-task-deadline">
+          <button class="btn btn-primary" id="add-task-btn">Add task</button>
+        </div>
+        <div class="filter-row">
+          <button class="chip active" data-filter="all">All</button>
+          <button class="chip" data-filter="active">Active</button>
+          <button class="chip" data-filter="completed">Completed</button>
+          <button class="chip" data-filter="high">High priority</button>
+          <button class="chip" data-filter="overdue">Overdue</button>
+        </div>
+        <div id="task-list"></div>
+      </div>
+    </section>
+
+    <!-- CALENDAR -->
+    <section class="panel" id="panel-calendar">
+      <div class="card">
+        <div class="cal-head">
+          <button class="btn btn-ghost btn-sm" id="cal-prev">← Prev</button>
+          <div class="month-label" id="cal-month-label"></div>
+          <button class="btn btn-ghost btn-sm" id="cal-next">Next →</button>
+        </div>
+        <div class="cal-grid" id="cal-dow-row"></div>
+        <div class="cal-grid" id="cal-grid" style="margin-top:6px;"></div>
+        <div class="cal-day-panel" id="cal-day-panel"></div>
+      </div>
+    </section>
+
+    <!-- FOCUS AUDIO -->
+    <section class="panel" id="panel-focus">
+      <div class="card">
+        <div class="section-title">Ambient focus sound</div>
+        <div class="muted" style="font-size:12.5px;margin-bottom:16px;">Binaural beats need stereo headphones to work properly. Only one sound plays at a time.</div>
+        <div class="sound-grid" id="sound-grid"></div>
+        <div class="volume-row">
+          <span class="muted" style="font-size:12.5px;">Volume</span>
+          <input type="range" id="volume-slider" min="0" max="100" value="45">
+        </div>
+      </div>
+    </section>
+
+    <!-- INSIGHTS -->
+    <section class="panel" id="panel-insights">
+      <div class="card">
+        <div class="section-title">Last 7 days</div>
+        <div class="muted" style="font-size:12.5px;">Pomodoros completed per day, this session.</div>
+        <div class="bar-chart" id="bar-chart"></div>
+      </div>
+      <div style="height:18px"></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-title">Today's totals</div>
+          <div class="stat-grid" style="grid-template-columns:1fr 1fr;">
+            <div class="stat-box"><div class="stat-num" id="ins-pomo">0</div><div class="stat-label">Pomodoros</div></div>
+            <div class="stat-box"><div class="stat-num" id="ins-tasks">0</div><div class="stat-label">Tasks completed</div></div>
+            <div class="stat-box"><div class="stat-num" id="ins-open">0</div><div class="stat-label">Tasks still open</div></div>
+            <div class="stat-box"><div class="stat-num" id="ins-overdue">0</div><div class="stat-label">Overdue tasks</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">Streak</div>
+          <p class="muted" style="font-size:13px;line-height:1.6;">Your streak grows every day you complete at least one pomodoro or task. It resets if a day passes with no activity.</p>
+          <div class="stat-box" style="text-align:center;">
+            <div class="stat-num"><span class="streak-flame">🔥</span> <span id="ins-streak">1</span></div>
+            <div class="stat-label">Current streak (days)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI -->
+    <section class="panel" id="panel-ai">
+      <div class="card">
+        <div class="section-title">Ask AI</div>
+        <div class="muted" style="font-size:12.5px;margin-bottom:12px;">Quick answers to study or work doubts, right where you're already focusing.</div>
+        <div class="chat-window" id="chat-window">
+          <div class="msg ai">Hi — ask me anything you're stuck on. I'll keep it short so you can get back to your pomodoro.</div>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" id="chat-input" placeholder="Type your doubt...">
+          <button class="btn btn-primary" id="chat-send">Send</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- state ---------- */
+  const todayKey = () => new Date().toDateString();
+
+  const state = {
+    tasks: [],
+    currentTaskId: null,
+    pomodoro: {
+      mode: 'focus',
+      focusMin: 25,
+      breakMin: 5,
+      remaining: 25*60,
+      running: false,
+      intervalId: null
+    },
+    daily: { date: todayKey(), pomodoros: 0, tasksCompleted: 0 },
+    streak: { count: 1, lastActiveDate: todayKey() },
+    history: [], // {date, pomodoros}
+    calendar: { viewYear: new Date().getFullYear(), viewMonth: new Date().getMonth(), selectedDate: null },
+    audio: { ctx: null, current: null, nodes: [], volume: 0.45 }
+  };
+
+  function seedHistory(){
+    for(let i=6;i>=0;i--){
+      const d = new Date();
+      d.setDate(d.getDate()-i);
+      state.history.push({ date: d.toDateString(), pomodoros: i===0 ? 0 : 0 });
+    }
+  }
+  seedHistory();
+
+  function ensureTodayBucket(){
+    const key = todayKey();
+    if(state.daily.date !== key){
+      // day rolled over
+      const hadActivity = state.daily.pomodoros > 0 || state.daily.tasksCompleted > 0;
+      if(hadActivity){
+        state.streak.count += 1;
+      } else {
+        state.streak.count = 1;
+      }
+      state.streak.lastActiveDate = key;
+      state.daily = { date: key, pomodoros: 0, tasksCompleted: 0 };
+      state.history.push({ date: key, pomodoros: 0 });
+      if(state.history.length > 7) state.history.shift();
+    }
+  }
+
+  /* ---------- utils ---------- */
+  function uid(){ return Math.random().toString(36).slice(2,10); }
+  function pad(n){ return n.toString().padStart(2,'0'); }
+  function fmtClock(sec){ return pad(Math.floor(sec/60))+':'+pad(sec%60); }
+  function fmtDue(iso){
+    if(!iso) return 'No deadline';
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined,{month:'short',day:'numeric'}) + ' · ' + d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+  }
+  function isOverdue(t){
+    return t.deadline && !t.completed && new Date(t.deadline).getTime() < Date.now();
+  }
+  function urgencyScore(t){
+    // lower = more urgent
+    let hours = t.deadline ? (new Date(t.deadline).getTime() - Date.now()) / 36e5 : 9999;
+    const bonus = t.priority === 'high' ? -6 : t.priority === 'medium' ? -2 : 0;
+    return hours + bonus;
+  }
+
+  /* ---------- tabs ---------- */
+  const tabTitles = { today:'Today', tasks:'Tasks', calendar:'Calendar', focus:'Focus audio', insights:'Insights', ai:'Ask AI' };
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.dataset.tab;
+      document.getElementById('panel-'+tab).classList.add('active');
+      document.getElementById('page-title').textContent = tabTitles[tab];
+      if(tab==='calendar') renderCalendar();
+      if(tab==='insights') renderInsights();
+    });
+  });
+
+  document.getElementById('today-date').textContent = new Date().toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'});
+
+  /* ---------- pomodoro timer ---------- */
+  const ring = document.getElementById('ring-progress');
+  const RADIUS = 88, CIRC = 2*Math.PI*RADIUS;
+  ring.style.strokeDasharray = CIRC;
+  const timerDisplay = document.getElementById('timer-display');
+  const timerModeLabel = document.getElementById('timer-mode-label');
+  const startBtn = document.getElementById('timer-start');
+  const pauseBtn = document.getElementById('timer-pause');
+  const resetBtn = document.getElementById('timer-reset');
+  const focusBtn = document.getElementById('mode-focus-btn');
+  const breakBtn = document.getElementById('mode-break-btn');
+  const durFocusInput = document.getElementById('dur-focus');
+  const durBreakInput = document.getElementById('dur-break');
+
+  function totalForMode(mode){
+    return mode==='focus' ? state.pomodoro.focusMin*60 : state.pomodoro.breakMin*60;
+  }
+
+  function updateRing(){
+    const total = totalForMode(state.pomodoro.mode);
+    const frac = state.pomodoro.remaining / total;
+    ring.style.strokeDashoffset = CIRC * (1-frac);
+    ring.classList.toggle('break', state.pomodoro.mode==='break');
+    timerDisplay.textContent = fmtClock(state.pomodoro.remaining);
+    timerModeLabel.textContent = state.pomodoro.mode==='focus' ? 'Focus session' : 'Break';
+  }
+
+  function setMode(mode){
+    if(state.pomodoro.running) return;
+    state.pomodoro.mode = mode;
+    state.pomodoro.remaining = totalForMode(mode);
+    focusBtn.classList.toggle('active', mode==='focus');
+    breakBtn.classList.toggle('active', mode==='break');
+    updateRing();
+  }
+  focusBtn.addEventListener('click', ()=>setMode('focus'));
+  breakBtn.addEventListener('click', ()=>setMode('break'));
+
+  durFocusInput.addEventListener('change', ()=>{
+    state.pomodoro.focusMin = Math.max(1, parseInt(durFocusInput.value)||25);
+    if(state.pomodoro.mode==='focus' && !state.pomodoro.running){
+      state.pomodoro.remaining = totalForMode('focus'); updateRing();
+    }
+  });
+  durBreakInput.addEventListener('change', ()=>{
+    state.pomodoro.breakMin = Math.max(1, parseInt(durBreakInput.value)||5);
+    if(state.pomodoro.mode==='break' && !state.pomodoro.running){
+      state.pomodoro.remaining = totalForMode('break'); updateRing();
+    }
+  });
+
+  function tick(){
+    ensureTodayBucket();
+    state.pomodoro.remaining -= 1;
+    if(state.pomodoro.remaining <= 0){
+      finishSession();
+      return;
+    }
+    updateRing();
+  }
+
+  function finishSession(){
+    clearInterval(state.pomodoro.intervalId);
+    state.pomodoro.running = false;
+    startBtn.textContent = 'Start';
+    pauseBtn.disabled = true;
+    if(state.pomodoro.mode === 'focus'){
+      state.daily.pomodoros += 1;
+      registerActivity();
+      // auto switch to break
+      setMode('break');
+    } else {
+      setMode('focus');
+    }
+    refreshAllStats();
+    playChime();
+  }
+
+  function registerActivity(){
+    ensureTodayBucket();
+    if(state.history.length && state.history[state.history.length-1].date === state.daily.date){
+      state.history[state.history.length-1].pomodoros = state.daily.pomodoros;
+    }
+  }
+
+  function playChime(){
+    try{
+      const ctx = getAudioCtx();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.frequency.value = 880;
+      g.gain.value = 0.001;
+      o.connect(g); g.connect(ctx.destination);
+      const now = ctx.currentTime;
+      g.gain.exponentialRampToValueAtTime(0.15, now+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, now+0.6);
+      o.start(now); o.stop(now+0.65);
+    }catch(e){}
+  }
+
+  startBtn.addEventListener('click', ()=>{
+    if(state.pomodoro.running) return;
+    state.pomodoro.running = true;
+    startBtn.textContent = 'Running…';
+    pauseBtn.disabled = false;
+    state.pomodoro.intervalId = setInterval(tick, 1000);
+  });
+  pauseBtn.addEventListener('click', ()=>{
+    state.pomodoro.running = false;
+    clearInterval(state.pomodoro.intervalId);
+    startBtn.textContent = 'Resume';
+    pauseBtn.disabled = true;
+  });
+  resetBtn.addEventListener('click', ()=>{
+    state.pomodoro.running = false;
+    clearInterval(state.pomodoro.intervalId);
+    state.pomodoro.remaining = totalForMode(state.pomodoro.mode);
+    startBtn.textContent = 'Start';
+    pauseBtn.disabled = true;
+    updateRing();
+  });
+
+  updateRing();
+
+  /* ---------- tasks ---------- */
+  const taskListEl = document.getElementById('task-list');
+  const suggestedListEl = document.getElementById('suggested-list');
+  let activeFilter = 'all';
+
+  document.getElementById('add-task-btn').addEventListener('click', addTask);
+  document.getElementById('new-task-title').addEventListener('keydown', e=>{ if(e.key==='Enter') addTask(); });
+
+  function addTask(){
+    const titleEl = document.getElementById('new-task-title');
+    const title = titleEl.value.trim();
+    if(!title) return;
+    const priority = document.getElementById('new-task-priority').value;
+    const deadline = document.getElementById('new-task-deadline').value || null;
+    state.tasks.push({ id: uid(), title, priority, deadline, completed:false, createdAt: Date.now() });
+    titleEl.value = '';
+    document.getElementById('new-task-deadline').value = '';
+    renderTasks();
+    renderSuggested();
+    renderCalendar();
+  }
+
+  function toggleComplete(id){
+    const t = state.tasks.find(t=>t.id===id);
+    if(!t) return;
+    t.completed = !t.completed;
+    ensureTodayBucket();
+    if(t.completed){
+      state.daily.tasksCompleted += 1;
+      registerActivity();
+    } else {
+      state.daily.tasksCompleted = Math.max(0, state.daily.tasksCompleted-1);
+    }
+    renderTasks(); renderSuggested(); refreshAllStats(); renderCalendar();
+  }
+
+  function deleteTask(id){
+    state.tasks = state.tasks.filter(t=>t.id!==id);
+    renderTasks(); renderSuggested(); renderCalendar();
+  }
+
+  function setPriority(id, priority){
+    const t = state.tasks.find(t=>t.id===id);
+    if(t){ t.priority = priority; renderTasks(); renderSuggested(); }
+  }
+
+  document.querySelectorAll('.chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+      activeFilter = chip.dataset.filter;
+      renderTasks();
+    });
+  });
+
+  function filteredTasks(){
+    return state.tasks.filter(t=>{
+      if(activeFilter==='active') return !t.completed;
+      if(activeFilter==='completed') return t.completed;
+      if(activeFilter==='high') return t.priority==='high';
+      if(activeFilter==='overdue') return isOverdue(t);
+      return true;
+    });
+  }
+
+  function renderTasks(){
+    const list = filteredTasks().slice().sort((a,b)=>{
+      if(a.completed !== b.completed) return a.completed ? 1 : -1;
+      return urgencyScore(a) - urgencyScore(b);
+    });
+    taskListEl.innerHTML = '';
+    if(list.length===0){
+      taskListEl.innerHTML = '<div class="empty-state">Nothing here. Add a task above to get started.</div>';
+      return;
+    }
+    list.forEach(t=>{
+      const row = document.createElement('div');
+      row.className = 'task-row';
+      const overdue = isOverdue(t);
+      row.innerHTML = `
+        <div class="task-check ${t.completed?'done':''}" data-id="${t.id}">${t.completed?'✓':''}</div>
+        <div class="task-body">
+          <div class="task-title ${t.completed?'done':''}">${escapeHtml(t.title)}</div>
+          <div class="task-meta">
+            <select class="prio-select" data-id="${t.id}">
+              <option value="high" ${t.priority==='high'?'selected':''}>High</option>
+              <option value="medium" ${t.priority==='medium'?'selected':''}>Medium</option>
+              <option value="low" ${t.priority==='low'?'selected':''}>Low</option>
+            </select>
+            <span class="due-text">${fmtDue(t.deadline)}</span>
+            ${overdue?'<span class="badge badge-overdue">Overdue</span>':''}
+          </div>
+        </div>
+        <div class="task-actions">
+          <button class="icon-btn use-btn" data-id="${t.id}" title="Set as current pomodoro task">◷</button>
+          <button class="icon-btn del-btn" data-id="${t.id}" title="Delete">✕</button>
+        </div>
+      `;
+      taskListEl.appendChild(row);
+    });
+    taskListEl.querySelectorAll('.task-check').forEach(el=>el.addEventListener('click', ()=>toggleComplete(el.dataset.id)));
+    taskListEl.querySelectorAll('.del-btn').forEach(el=>el.addEventListener('click', ()=>deleteTask(el.dataset.id)));
+    taskListEl.querySelectorAll('.prio-select').forEach(el=>el.addEventListener('change', ()=>setPriority(el.dataset.id, el.value)));
+    taskListEl.querySelectorAll('.use-btn').forEach(el=>el.addEventListener('click', ()=>setCurrentTask(el.dataset.id)));
+  }
+
+  function setCurrentTask(id){
+    state.currentTaskId = id;
+    const t = state.tasks.find(t=>t.id===id);
+    const wrap = document.getElementById('current-task-tag-wrap');
+    wrap.innerHTML = t ? `<div class="current-task-tag">◷ Focusing on: ${escapeHtml(t.title)}</div>` : '';
+    document.querySelector('[data-tab="today"]').click();
+  }
+
+  function renderSuggested(){
+    const open = state.tasks.filter(t=>!t.completed).sort((a,b)=>urgencyScore(a)-urgencyScore(b)).slice(0,4);
+    suggestedListEl.innerHTML = '';
+    if(open.length===0){
+      suggestedListEl.innerHTML = '<div class="empty-state">No open tasks. Add one from the Tasks tab.</div>';
+      return;
+    }
+    open.forEach(t=>{
+      const overdue = isOverdue(t);
+      const div = document.createElement('div');
+      div.className = 'suggest-item';
+      div.innerHTML = `
+        <div class="suggest-left">
+          <span class="prio-dot prio-${t.priority}"></span>
+          <div style="min-width:0;">
+            <div class="suggest-title">${escapeHtml(t.title)}</div>
+            <div class="suggest-due">${overdue?'Overdue · ':''}${fmtDue(t.deadline)}</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm use-btn" data-id="${t.id}">Focus</button>
+      `;
+      suggestedListEl.appendChild(div);
+    });
+    suggestedListEl.querySelectorAll('.use-btn').forEach(el=>el.addEventListener('click', ()=>setCurrentTask(el.dataset.id)));
+  }
+
+  function escapeHtml(s){
+    const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+  }
+
+  /* ---------- calendar ---------- */
+  const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const dowRow = document.getElementById('cal-dow-row');
+  DOW.forEach(d=>{ const el=document.createElement('div'); el.className='cal-dow'; el.textContent=d; dowRow.appendChild(el); });
+
+  document.getElementById('cal-prev').addEventListener('click', ()=>{
+    state.calendar.viewMonth -= 1;
+    if(state.calendar.viewMonth<0){ state.calendar.viewMonth=11; state.calendar.viewYear -= 1; }
+    renderCalendar();
+  });
+  document.getElementById('cal-next').addEventListener('click', ()=>{
+    state.calendar.viewMonth += 1;
+    if(state.calendar.viewMonth>11){ state.calendar.viewMonth=0; state.calendar.viewYear += 1; }
+    renderCalendar();
+  });
+
+  function renderCalendar(){
+    const { viewYear, viewMonth } = state.calendar;
+    document.getElementById('cal-month-label').textContent =
+      new Date(viewYear, viewMonth, 1).toLocaleDateString(undefined,{month:'long', year:'numeric'});
+    const grid = document.getElementById('cal-grid');
+    grid.innerHTML = '';
+    const firstDow = new Date(viewYear, viewMonth, 1).getDay();
+    const daysInMonth = new Date(viewYear, viewMonth+1, 0).getDate();
+    const daysInPrevMonth = new Date(viewYear, viewMonth, 0).getDate();
+    const cells = [];
+    for(let i=firstDow-1;i>=0;i--) cells.push({day: daysInPrevMonth-i, other:true, month: viewMonth-1});
+    for(let d=1;d<=daysInMonth;d++) cells.push({day:d, other:false, month: viewMonth});
+    while(cells.length % 7 !== 0) cells.push({day: cells.length, other:true, month: viewMonth+1});
+
+    const todayStr = new Date().toDateString();
+
+    cells.forEach(c=>{
+      const cellDate = new Date(viewYear, c.month, c.day);
+      const cellStr = cellDate.toDateString();
+      const dayTasks = state.tasks.filter(t=>t.deadline && new Date(t.deadline).toDateString()===cellStr);
+      const div = document.createElement('div');
+      div.className = 'cal-cell' + (c.other?' other-month':'') + (cellStr===todayStr?' today':'') + (state.calendar.selectedDate===cellStr?' selected':'');
+      div.innerHTML = `<div class="cal-daynum">${c.day}</div><div class="cal-dots">${dayTasks.slice(0,5).map(t=>`<span class="cal-dot prio-${t.priority}"></span>`).join('')}</div>`;
+      div.addEventListener('click', ()=>{
+        state.calendar.selectedDate = cellStr;
+        renderCalendar();
+        renderCalDayPanel(cellStr);
+      });
+      grid.appendChild(div);
+    });
+
+    if(state.calendar.selectedDate) renderCalDayPanel(state.calendar.selectedDate);
+  }
+
+  function renderCalDayPanel(dateStr){
+    const panel = document.getElementById('cal-day-panel');
+    const dayTasks = state.tasks.filter(t=>t.deadline && new Date(t.deadline).toDateString()===dateStr);
+    const niceDate = new Date(dateStr).toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'});
+    if(dayTasks.length===0){
+      panel.innerHTML = `<h3>${niceDate}</h3><div class="empty-state">No tasks due this day.</div>`;
+      return;
+    }
+    panel.innerHTML = `<h3>${niceDate}</h3>` + dayTasks.map(t=>`
+      <div class="task-row">
+        <div class="task-check ${t.completed?'done':''}" data-id="${t.id}">${t.completed?'✓':''}</div>
+        <div class="task-body">
+          <div class="task-title ${t.completed?'done':''}">${escapeHtml(t.title)}</div>
+          <div class="task-meta"><span class="badge badge-${t.priority}">${t.priority}</span><span class="due-text">${fmtDue(t.deadline)}</span></div>
+        </div>
+      </div>
+    `).join('');
+    panel.querySelectorAll('.task-check').forEach(el=>el.addEventListener('click', ()=>{ toggleComplete(el.dataset.id); renderCalDayPanel(dateStr); }));
+  }
+
+  /* ---------- stats / insights ---------- */
+  function refreshAllStats(){
+    ensureTodayBucket();
+    document.getElementById('side-pomo').textContent = state.daily.pomodoros;
+    document.getElementById('side-tasks').textContent = state.daily.tasksCompleted;
+    document.getElementById('side-streak').textContent = state.streak.count;
+    document.getElementById('pill-streak').textContent = state.streak.count;
+    document.getElementById('glance-pomo').textContent = state.daily.pomodoros;
+    document.getElementById('glance-tasks').textContent = state.daily.tasksCompleted;
+    document.getElementById('glance-streak').textContent = state.streak.count;
+    renderInsights();
+  }
+
+  function renderInsights(){
+    const chart = document.getElementById('bar-chart');
+    chart.innerHTML = '';
+    const max = Math.max(1, ...state.history.map(h=>h.pomodoros));
+    state.history.forEach(h=>{
+      const pct = (h.pomodoros / max) * 100;
+      const col = document.createElement('div');
+      col.className = 'bar-col';
+      col.innerHTML = `<div style="font-size:11px;font-weight:600;">${h.pomodoros||''}</div>
+        <div class="bar ${h.pomodoros>0?'has-value':''}" style="height:${Math.max(pct,4)}%;"></div>
+        <div class="bar-day">${new Date(h.date).toLocaleDateString(undefined,{weekday:'short'})}</div>`;
+      chart.appendChild(col);
+    });
+    document.getElementById('ins-pomo').textContent = state.daily.pomodoros;
+    document.getElementById('ins-tasks').textContent = state.daily.tasksCompleted;
+    document.getElementById('ins-open').textContent = state.tasks.filter(t=>!t.completed).length;
+    document.getElementById('ins-overdue').textContent = state.tasks.filter(isOverdue).length;
+    document.getElementById('ins-streak').textContent = state.streak.count;
+  }
+
+  /* ---------- focus audio (Web Audio API, generated in-browser) ---------- */
+  const sounds = [
+    { id:'rain', name:'Rain', icon:'☂', desc:'Soft filtered noise, like steady rainfall.' },
+    { id:'ocean', name:'Ocean waves', icon:'∼', desc:'Noise shaped into a slow rolling swell.' },
+    { id:'white', name:'White noise', icon:'▦', desc:'Flat, even static to mask distractions.' },
+    { id:'gamma', name:'40Hz gamma binaural', icon:'∿', desc:'Binaural beat tuned for alert focus. Needs headphones.' },
+    { id:'theta', name:'6Hz theta binaural', icon:'∿', desc:'Binaural beat tuned for calm, relaxed focus. Needs headphones.' }
+  ];
+  const soundGrid = document.getElementById('sound-grid');
+  sounds.forEach(s=>{
+    const card = document.createElement('div');
+    card.className = 'sound-card';
+    card.dataset.id = s.id;
+    card.innerHTML = `<div class="sound-icon">${s.icon}</div><div class="sound-name">${s.name}</div><div class="sound-desc">${s.desc}</div><div class="sound-state">Playing ⏸</div>`;
+    card.addEventListener('click', ()=>toggleSound(s.id, card));
+    soundGrid.appendChild(card);
+  });
+
+  function getAudioCtx(){
+    if(!state.audio.ctx) state.audio.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    return state.audio.ctx;
+  }
+
+  function stopSound(){
+    state.audio.nodes.forEach(n=>{ try{ n.stop && n.stop(); }catch(e){} try{ n.disconnect && n.disconnect(); }catch(e){} });
+    state.audio.nodes = [];
+    state.audio.current = null;
+    document.querySelectorAll('.sound-card').forEach(c=>c.classList.remove('playing'));
+  }
+
+  function makeNoiseBuffer(ctx){
+    const bufferSize = 2 * ctx.sampleRate;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for(let i=0;i<bufferSize;i++) data[i] = Math.random()*2-1;
+    return buffer;
+  }
+
+  function toggleSound(id, card){
+    if(state.audio.current === id){ stopSound(); return; }
+    stopSound();
+    const ctx = getAudioCtx();
+    if(ctx.state === 'suspended') ctx.resume();
+    const masterGain = ctx.createGain();
+    masterGain.gain.value = state.audio.volume;
+    masterGain.connect(ctx.destination);
+    state.audio.nodes.push(masterGain);
+
+    if(id==='rain' || id==='ocean' || id==='white'){
+      const src = ctx.createBufferSource();
+      src.buffer = makeNoiseBuffer(ctx);
+      src.loop = true;
+      const filter = ctx.createBiquadFilter();
+      if(id==='rain'){ filter.type='bandpass'; filter.frequency.value=1600; filter.Q.value=0.6; }
+      if(id==='ocean'){ filter.type='lowpass'; filter.frequency.value=500; }
+      if(id==='white'){ filter.type='allpass'; filter.frequency.value=1000; }
+      src.connect(filter); filter.connect(masterGain);
+      src.start();
+      state.audio.nodes.push(src, filter);
+
+      if(id==='ocean'){
+        const lfo = ctx.createOscillator();
+        const lfoGain = ctx.createGain();
+        lfo.frequency.value = 0.15;
+        lfoGain.gain.value = 0.25;
+        lfo.connect(lfoGain);
+        lfoGain.connect(masterGain.gain);
+        lfo.start();
+        state.audio.nodes.push(lfo, lfoGain);
+      }
+    } else {
+      // binaural beats
+      const base = 200;
+      const beat = id==='gamma' ? 40 : 6;
+      const oscL = ctx.createOscillator();
+      const oscR = ctx.createOscillator();
+      oscL.frequency.value = base;
+      oscR.frequency.value = base + beat;
+      const panL = ctx.createStereoPanner(); panL.pan.value = -1;
+      const panR = ctx.createStereoPanner(); panR.pan.value = 1;
+      const gL = ctx.createGain(); gL.gain.value = 0.5;
+      const gR = ctx.createGain(); gR.gain.value = 0.5;
+      oscL.connect(gL); gL.connect(panL); panL.connect(masterGain);
+      oscR.connect(gR); gR.connect(panR); panR.connect(masterGain);
+      oscL.start(); oscR.start();
+      state.audio.nodes.push(oscL, oscR, panL, panR, gL, gR);
+    }
+    state.audio.current = id;
+    card.classList.add('playing');
+  }
+
+  document.getElementById('volume-slider').addEventListener('input', (e)=>{
+    state.audio.volume = e.target.value/100;
+    state.audio.nodes.forEach(n=>{ if(n.gain && n.gain.value !== undefined && state.audio.nodes.indexOf(n)===0){ n.gain.value = state.audio.volume; } });
+    // simplest: the first node pushed is masterGain
+    if(state.audio.nodes[0] && state.audio.nodes[0].gain) state.audio.nodes[0].gain.value = state.audio.volume;
+  });
+
+  /* ---------- AI chat ---------- */
+  const chatWindow = document.getElementById('chat-window');
+  const chatInput = document.getElementById('chat-input');
+  const chatHistory = [];
+
+  function addMsg(text, cls){
+    const div = document.createElement('div');
+    div.className = 'msg ' + cls;
+    div.textContent = text;
+    chatWindow.appendChild(div);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+    return div;
+  }
+
+  async function sendChat(){
+    const text = chatInput.value.trim();
+    if(!text) return;
+    addMsg(text, 'user');
+    chatHistory.push({ role:'user', content:text });
+    chatInput.value = '';
+    const loadingEl = addMsg('Thinking…', 'ai loading');
+    try{
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({
+          model:'claude-sonnet-4-6',
+          max_tokens:1000,
+          system:'You are a quick homework/work doubt-solver embedded inside a productivity app called Time It Smart. Answer clearly and concisely, prioritizing brevity so the user can get back to focused work.',
+          messages: chatHistory
+        })
+      });
+      const data = await res.json();
+      const reply = (data.content||[]).map(b=>b.text||'').join('\\n').trim() || "I couldn't work that out — try rephrasing?";
+      loadingEl.remove();
+      addMsg(reply, 'ai');
+      chatHistory.push({ role:'assistant', content:reply });
+    }catch(err){
+      loadingEl.remove();
+      addMsg("Couldn't reach the AI right now. Please try again in a moment.", 'ai');
+    }
+  }
+  document.getElementById('chat-send').addEventListener('click', sendChat);
+  chatInput.addEventListener('keydown', e=>{ if(e.key==='Enter') sendChat(); });
+
+  /* ---------- init ---------- */
+  renderTasks();
+  renderSuggested();
+  renderCalendar();
+  refreshAllStats();
+  setInterval(refreshAllStats, 30000);
+
+})();
+</script>
+</body>
+</html>
